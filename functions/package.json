@@ -1,0 +1,15 @@
+{
+  "name": "web2md-functions",
+  "description": "web2md Firebase Functions — Express server",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "express": "^5.2.1",
+    "firebase-functions": "^6.0.0",
+    "jsdom": "^29.1.1",
+    "turndown": "^7.2.4"
+  }
+}
