@@ -222,6 +222,9 @@
   </div>
 
   <script>
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const API_BASE = isLocal ? '' : 'https://web2md-production-d8c0.up.railway.app';
+
     const urlInput = document.getElementById('urlInput');
     const convertBtn = document.getElementById('convertBtn');
     const loader = document.getElementById('loader');
@@ -270,7 +273,7 @@
         const mode = getMode();
         setLoading(true, 'Converting to Markdown...');
 
-        const res = await fetch('/api/convert', {
+        const res = await fetch(API_BASE + '/api/convert', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url, mode })
@@ -311,7 +314,7 @@
 
     downloadBtn.addEventListener('click', () => {
       if (!currentUrl) return;
-      window.open('/download?url=' + encodeURIComponent(currentUrl) + '&mode=' + currentMode, '_blank');
+      window.open(API_BASE + '/download?url=' + encodeURIComponent(currentUrl) + '&mode=' + currentMode, '_blank');
     });
   </script>
 </body>
