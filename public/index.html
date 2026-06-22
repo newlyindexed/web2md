@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
   <title>web2md — Turn any website into AI-readable Markdown</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -222,8 +224,12 @@
   </div>
 
   <script>
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const API_BASE = isLocal ? '' : 'https://web2md-production-d8c0.up.railway.app';
+    const hn = window.location.hostname;
+    const isFirebase = hn.endsWith('web.app') || hn.endsWith('firebaseapp.com');
+    const API_BASE = (hn === 'localhost' || hn === '127.0.0.1' || !isFirebase)
+      ? ''
+      : 'https://web2md-production-d8c0.up.railway.app';
+    console.log('web2md v2.1 — API_BASE:', API_BASE || '(relative/local)', '| host:', hn);
 
     const urlInput = document.getElementById('urlInput');
     const convertBtn = document.getElementById('convertBtn');
@@ -279,13 +285,10 @@
           body: JSON.stringify({ url, mode })
         });
 
-        const data = await res.json();
+        const data = await res.json().catch(() => null);
 
-        if (!res.ok) {
-          let msg = data.error || 'Conversion failed';
-          if (msg.includes('Try "Full Page" mode')) {
-            msg = msg.replace('Try "Full Page" mode instead, or the site may require JavaScript.', 'Try switching to <strong>Full Page</strong> mode above.');
-          }
+        if (!res.ok || !data) {
+          const msg = data?.error || 'Conversion failed (HTTP ' + res.status + ')';
           showError(msg);
           setLoading(false);
           return;
@@ -301,20 +304,20 @@
         resultDiv.classList.add('active');
         errorDiv.classList.remove('active');
       } catch (err) {
-        console.error('Fetch error:', err);
-        showError('Could not connect. Server may be waking up from sleep. Try again in a few seconds.');
+        console.error('Fetch error to:', API_BASE + '/api/convert', err);
+        showError('Could not connect. If this persists, the server may be asleep — try again.');
       } finally {
         setLoading(false);
       }
     }
 
-    async function fetchWithRetry(url, options, retries = 2, delay = 3000) {
+    async function fetchWithRetry(url, options, retries = 4, delay = 4000) {
       for (let i = 0; i <= retries; i++) {
         try {
           return await fetch(url, options);
         } catch (err) {
           if (i === retries) throw err;
-          loaderText.textContent = 'Server waking up, retrying...';
+          loaderText.textContent = 'Server waking up, retrying (' + (i + 1) + '/' + retries + ')...';
           await new Promise(r => setTimeout(r, delay));
         }
       }
