@@ -1,0 +1,20 @@
+{
+  "name": "web2md",
+  "version": "1.0.0",
+  "description": "Turn any website into an AI-readable Markdown file",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": ["markdown", "web", "converter", "ai", "readability"],
+  "author": "Alvinder Singh",
+  "license": "MIT",
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "express": "^5.2.1",
+    "jsdom": "^29.1.1",
+    "marked": "^18.0.5",
+    "turndown": "^7.2.4"
+  }
+}

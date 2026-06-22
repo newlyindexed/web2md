@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>web2md — Turn any website into AI-readable Markdown</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    .container { width: 100%; max-width: 540px; }
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      font-size: 2rem;
+      color: #58a6ff;
+      margin-bottom: 0.25rem;
+    }
+    header p {
+      color: #8b949e;
+      font-size: 0.95rem;
+    }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .input-row input {
+      flex: 1;
+      padding: 0.65rem 0.75rem;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-row input:focus { border-color: #58a6ff; }
+    .input-row input::placeholder { color: #484f58; }
+    button {
+      padding: 0.65rem 1.25rem;
+      background: #238636;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    button:hover { background: #2ea043; }
+    button:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+    .btn-download {
+      display: block;
+      width: 100%;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      text-align: center;
+    }
+    .mode-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .mode-row label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.45rem 0.85rem;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .mode-row input[type="radio"] { display: none; }
+    .mode-row input[type="radio"]:checked + span {
+      background: #1f6feb22;
+      border-radius: 6px;
+      padding: 0.45rem 0.85rem;
+      margin: -0.45rem -0.85rem;
+    }
+    .mode-row label:has(input:checked) {
+      border-color: #58a6ff;
+      background: #1f6feb11;
+    }
+    .loader {
+      display: none;
+      text-align: center;
+      padding: 1rem 0;
+      color: #8b949e;
+    }
+    .loader.active { display: block; }
+    .spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid #30363d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error {
+      display: none;
+      padding: 0.75rem 1rem;
+      background: #da363311;
+      border: 1px solid #da3633;
+      border-radius: 6px;
+      color: #f85149;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    .error.active { display: block; }
+    .result {
+      display: none;
+      text-align: center;
+    }
+    .result.active { display: block; }
+    .result-meta {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 20px;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.8rem;
+      color: #8b949e;
+    }
+    footer {
+      margin-top: 2rem;
+      text-align: center;
+      color: #484f58;
+      font-size: 0.8rem;
+    }
+    footer a { color: #58a6ff; text-decoration: none; }
+    @media (max-width: 500px) {
+      .input-row { flex-direction: column; }
+      .mode-row { flex-direction: column; align-items: flex-start; }
+    }
+    .success-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>web2md</h1>
+      <p>Turn any website into AI-readable Markdown</p>
+    </header>
+
+    <div class="card">
+      <div class="input-row">
+        <input
+          type="url"
+          id="urlInput"
+          placeholder="https://example.com/article"
+          autofocus
+          autocomplete="url"
+        >
+        <button id="convertBtn">Convert</button>
+      </div>
+      <div class="mode-row">
+        <label>
+          <input type="radio" name="mode" value="article" checked>
+          Article Only
+        </label>
+        <label>
+          <input type="radio" name="mode" value="full">
+          Full Page
+        </label>
+      </div>
+      <div class="loader" id="loader">
+        <span class="spinner"></span><span id="loaderText">Fetching and converting...</span>
+      </div>
+      <div class="error" id="error"></div>
+      <div class="result" id="result">
+        <div class="success-icon">&#10003;</div>
+        <div class="result-meta">
+          <span class="badge" id="badgeTitle"></span>
+          <span class="badge" id="badgeMode"></span>
+          <span class="badge" id="badgeWords"></span>
+        </div>
+        <button class="btn-download" id="downloadBtn">Download .md</button>
+      </div>
+    </div>
+
+    <footer>
+      <a href="/download">/download</a> &middot;
+      <a href="/raw">/raw</a> &middot;
+      <a href="/api/convert">/api</a>
+    </footer>
+  </div>
+
+  <script>
+    const urlInput = document.getElementById('urlInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const loader = document.getElementById('loader');
+    const loaderText = document.getElementById('loaderText');
+    const errorDiv = document.getElementById('error');
+    const resultDiv = document.getElementById('result');
+    const badgeTitle = document.getElementById('badgeTitle');
+    const badgeMode = document.getElementById('badgeMode');
+    const badgeWords = document.getElementById('badgeWords');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    let currentUrl = '';
+    let currentMode = '';
+
+    function getMode() {
+      const checked = document.querySelector('input[name="mode"]:checked');
+      return checked ? checked.value : 'article';
+    }
+
+    function setLoading(active, text) {
+      loader.classList.toggle('active', active);
+      loaderText.textContent = text || 'Fetching and converting...';
+      convertBtn.disabled = active;
+      if (active) {
+        errorDiv.classList.remove('active');
+        resultDiv.classList.remove('active');
+      }
+    }
+
+    function showError(msg) {
+      errorDiv.textContent = msg;
+      errorDiv.classList.add('active');
+      resultDiv.classList.remove('active');
+    }
+
+    async function doConvert() {
+      const url = urlInput.value.trim();
+      if (!url) {
+        showError('Please enter a URL');
+        return;
+      }
+
+      setLoading(true, 'Fetching page...');
+
+      try {
+        const mode = getMode();
+        setLoading(true, 'Converting to Markdown...');
+
+        const res = await fetch('/api/convert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, mode })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          let msg = data.error || 'Conversion failed';
+          if (msg.includes('Try "Full Page" mode')) {
+            msg = msg.replace('Try "Full Page" mode instead, or the site may require JavaScript.', 'Try switching to <strong>Full Page</strong> mode above.');
+          }
+          showError(msg);
+          setLoading(false);
+          return;
+        }
+
+        currentUrl = url;
+        currentMode = mode;
+
+        badgeTitle.textContent = data.title || 'Untitled';
+        badgeMode.textContent = data.mode === 'article' ? 'Article Only' : 'Full Page';
+        badgeWords.textContent = data.wordCount + ' words';
+
+        resultDiv.classList.add('active');
+        errorDiv.classList.remove('active');
+      } catch (err) {
+        showError('Could not connect to the server. Make sure web2md is running.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    convertBtn.addEventListener('click', doConvert);
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doConvert();
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!currentUrl) return;
+      window.open('/download?url=' + encodeURIComponent(currentUrl) + '&mode=' + currentMode, '_blank');
+    });
+  </script>
+</body>
+</html>
