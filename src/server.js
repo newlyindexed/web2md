@@ -116,6 +116,9 @@ app.get('/raw', async (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'Invalid JSON in request body' });
+  }
   res.status(500).json({ error: 'Internal server error' });
 });
 

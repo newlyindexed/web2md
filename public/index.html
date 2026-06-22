@@ -273,7 +273,7 @@
         const mode = getMode();
         setLoading(true, 'Converting to Markdown...');
 
-        const res = await fetch(API_BASE + '/api/convert', {
+        const res = await fetchWithRetry(API_BASE + '/api/convert', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url, mode })
@@ -301,9 +301,22 @@
         resultDiv.classList.add('active');
         errorDiv.classList.remove('active');
       } catch (err) {
-        showError('Could not connect to the server. Make sure web2md is running.');
+        console.error('Fetch error:', err);
+        showError('Could not connect. Server may be waking up from sleep. Try again in a few seconds.');
       } finally {
         setLoading(false);
+      }
+    }
+
+    async function fetchWithRetry(url, options, retries = 2, delay = 3000) {
+      for (let i = 0; i <= retries; i++) {
+        try {
+          return await fetch(url, options);
+        } catch (err) {
+          if (i === retries) throw err;
+          loaderText.textContent = 'Server waking up, retrying...';
+          await new Promise(r => setTimeout(r, delay));
+        }
       }
     }
 
